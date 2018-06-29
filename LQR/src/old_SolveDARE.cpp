@@ -1,0 +1,70 @@
+/*
+ * old_SolveDARE.cpp
+ *
+ *  Created on: 22 Jun 2018
+ *      Author: sebastijan
+ */
+
+#include </home/sebastijan/Documents/Golem/packages/Plugin/Data/iLQR/include/Golem/Data/iLQR/iLQR.h>
+#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <iostream>
+#include <string>
+#include <stdio.h>
+
+
+
+/*
+ * This was the old implementation based on the slides from the University of Edinburgh
+ * Gives very comparable results to the current implementation that is in place now from the 
+ * Drake library 
+ */
+
+   Eigen::MatrixXd iLQR::old_SolveDARE(const Containers::TransitionMatrix &A,
+		   	   	   	   	   	   	   const Containers::ControlMatrix &B,
+								   const Containers::StateCostMatrix &Qt,
+								   const Containers::InputCostMatrix &Rt)
+{
+
+   Util Utility;
+
+   Utility.SizeCheck(A, Utility.TranMat());
+   Utility.SizeCheck(B, Utility.ConMat());
+   Utility.SizeCheck(Qt, Utility.StCoMat());
+   Utility.SizeCheck(Rt, Utility.InpCoMat());
+
+	/** Initialise local variables */
+	Containers::PMatrix P;
+	/** according to the slides, this is a possible starting point at each iteration */
+	P = Qt;
+	Containers::TransitionMatrix AT;
+	Containers::ControlMatrixTranspose BT;
+
+	AT = A.transpose();
+	BT = B.transpose();
+
+	double PNorm = 100.0; // how to decide on this value?
+
+	bool RecursionFinished = false;
+	int i = 0;
+	double eps = 1e-8;								// What is the best choice regarding epsilon?
+	int MaxIterations = 10000; 						// What is the best choice regarding the max number of iterations?
+
+	while(!RecursionFinished) {
+
+		/** The middle term should be probably done using cholesky */
+		//	L = Rt.llt().matrixL();
+		//	RInv = L.inverse().transpose()*L.inverse();
+
+		P = Qt + AT*(P)*A - AT*(P)*B*(BT*(P)*B+Rt).inverse()*BT*(P)*A;
+		if ((abs(P.norm() - PNorm) < eps) || (i > MaxIterations)) {
+		RecursionFinished = true;
+		}
+
+		PNorm = P.norm();
+		i++;
+	};
+
+	return P;
+}
+

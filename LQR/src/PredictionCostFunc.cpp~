@@ -1,0 +1,38 @@
+/*
+ * PredictionCostFunc.cpp
+ *
+ *  Created on: 14 Jun 2018
+ *      Author: sebastijan
+ */
+
+
+#include </home/sebastijan/Documents/Golem/packages/Plugin/Data/iLQR/include/Golem/Data/iLQR/iLQR.h>
+#include <Eigen/Dense>
+#include <Eigen/Core>
+
+double iLQR::PredictionCostFunc(const Containers::StateVector &xHat, const Containers::InputVector &uHat,
+							    const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt)
+{
+
+    Util Utility;
+
+	Utility.SizeCheck(xHat, Utility.StVec());
+	Utility.SizeCheck(uHat, Utility.InpVec());
+
+	Utility.SizeCheck(Rt, Utility.InpCoMat());
+	Utility.SizeCheck(Qt, Utility.StCoMat());
+
+	double Cost, StateCost, InputCost;
+	Eigen::RowVectorXd xHatT;
+	Eigen::RowVectorXd uHatT;
+
+
+	uHatT = uHat.transpose();
+	xHatT = xHat.transpose();
+
+	StateCost = xHatT*Qt*xHat;
+	InputCost = uHatT*Rt*uHat;
+	Cost = StateCost + InputCost;
+
+	return Cost;
+}
