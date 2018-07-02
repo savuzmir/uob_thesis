@@ -1,6 +1,6 @@
 # UoB Thesis 
 
-Note: For now, all files are created as independent c++ files. Once the basic functionality will work, I will begin integrating/merging the relevant parts with the way in which its done in Golem and will also replace the independent implementation with one that is integrated with Golem (i.e. as additional functionality within packages/Plugin/Data)
+Note: For now, all files are created as independent c++ files. Once the basic functionality will work, I will begin integrating/merging the relevant parts to make them Golem compatible and will remove the independent temporary implementations (i.e. the trajectory creator) that will not be needed in the final system. These will also be then integrated with Golem (i.e. as additional functionality within packages/Plugin/Data)
 
 ## TODO:
 - Add all include guards to all files
@@ -10,6 +10,7 @@ Note: For now, all files are created as independent c++ files. Once the basic fu
 - Make the code more efficient and less wasteful. Most likely, a lot more memory than needed is being used in parts at the moment due to me not being familiar with best practices
 - Use SFLM Library through which user input should be obtained 
 - Implement the function that checks for matrix sizes 
+- make the nearest neighbour computation handle more than one nearest neighbour. In that case it will conservatively pick the     trajectory that has been prefered so far by the user. 
 
 ## Done:
 - LQR class that correctly computes LQR and saves it in a map of trajectories. Example:
