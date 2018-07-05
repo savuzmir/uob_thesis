@@ -11,10 +11,11 @@ Note: For now, all files are created as independent c++ files. Once the basic fu
 
 ## Done:
 - LQR class that correctly computes LQR and saves it in a map of trajectories. Example:
-FeedbackMatrixMap['A5'] would return the corresponding K matrix for the 5th waypoint of trajectory A. The names are completely arbitrary. 
+FeedbackMatrixMap["A5"] would return the corresponding K matrix for the 5th waypoint of trajectory A. The names are completely arbitrary. 
 - Trajectory creator (CreateTrajectory) will create multiple trajectories saved to a file. These are then read 
 - Utility function that checks correct size 
 - Compared my implementation of the SolveDARE with github.com/RobotLocomotion/drake and it gives nearly identical results, used theirs due to additional checks that are inside. 
 - Made typedefs for all continously used data structures and added iterator for loops
 - included header guards to the relevant files
 - Made the nearest neighbour computation handle more than one nearest neighbour. In that case it will conservatively pick the     trajectory that has been prefered so far by the user.
+- Substantially overhauled the nearest neighbour (i.e. the way it parses trajectories and picks the current trajectory) 
