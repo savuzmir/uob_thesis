@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-# uob_thesis
-
-## H2
-Done so far:
-- LQR class that correctly computes LQR and saves it in a map of trajectories (e.g. 'A5': [
-
-### H3
-Todo:
-- Add all include guards to all files
-- Make typedefs for all used data structures and check where 
-=======
 # UoB Thesis 
 
 Note: For now, all files are created as independent c++ files. Once the basic functionality will work, I will begin integrating/merging the relevant parts to make them Golem compatible and will remove the independent temporary implementations (i.e. the trajectory creator) that will not be needed in the final system. These will also be then integrated with Golem (i.e. as additional functionality within packages/Plugin/Data)
@@ -31,4 +19,4 @@ FeedbackMatrixMap["A5"] would return the corresponding K matrix for the 5th wayp
 - included header guards to the relevant files
 - Made the nearest neighbour computation handle more than one nearest neighbour. In that case it will conservatively pick the     trajectory that has been prefered so far by the user.
 - Substantially overhauled the nearest neighbour (i.e. the way it parses trajectories and picks the current trajectory) 
->>>>>>> 018a94c287281a010eb3f965e03f65fb3337f747
+
