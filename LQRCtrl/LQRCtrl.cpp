@@ -547,6 +547,7 @@ int main()
 			Identifier = *trajit + *waypit;
 			/** Save K for this trajectory and waypoint */
 			FeedbackMatrixMap.insert({Identifier, K});
+			std::cout << "Computed feedback matrix for waypoint " << *waypit << std::endl;
 		}
 	std::cout << "Computed feedback matrix for trajectory: " << *trajit << std::endl;
 
