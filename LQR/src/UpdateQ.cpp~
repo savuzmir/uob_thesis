@@ -7,8 +7,8 @@
  *  Last comment: 18.6.
  */
 
-
 #include </home/sebastijan/Documents/Golem/packages/Plugin/Data/iLQR/include/Golem/Data/iLQR/iLQR.h>
+#include </home/sebastijan/eclipse-workspace/LQR/src/util.cpp>
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <iostream>

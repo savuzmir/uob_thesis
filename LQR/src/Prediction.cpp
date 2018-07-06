@@ -21,7 +21,7 @@
 
 struct Containers::SystemPrediction iLQR::Prediction(const Containers::TransitionMatrix &A, const Containers::ControlMatrix &B,
 													 const Containers::InputVector &uUser, const Containers::StateVector &x,
-													 const Containers::InputVector &TrajectoryInput, const Containers::StateVector &TrajectoryState)
+													 const Containers::StateVector &TrajectoryState, const Containers::InputVector &TrajectoryInput)
 {
 
 	struct Containers::SystemPrediction Points;

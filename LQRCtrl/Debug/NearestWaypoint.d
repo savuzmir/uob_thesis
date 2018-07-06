@@ -1,0 +1,1 @@
+NearestWaypoint.o: ../NearestWaypoint.cpp

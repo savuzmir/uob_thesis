@@ -23,6 +23,12 @@
 #include <boost/random/normal_distribution.hpp>
 
 
+
+
+
+
+
+
 /** This file actually should be in the LQRControl */
 
 int main() {
@@ -40,7 +46,7 @@ int main() {
 	P_M	= Data.PARAM_M;
 
 	/** Size of our trajectories; i.e. number of waypoints */
-/*	int TrajectorySize = Data.TRAJECTORY_SIZE;
+//	int TrajectorySize = Data.TRAJECTORY_SIZE;
 
 	/** Container with waypoint information filled up in GetKeys */
 /*	std::vector<std::string> WaypContainer;
@@ -72,14 +78,14 @@ int main() {
     // double GoalState = 0.5;
 
     /** Here, we have our waypoint struct that is used in the K computation */
-/*	Containers::WaypointSelection Waypoints[TrajectorySize];
+//	Containers::WaypointSelection Waypoints[TrajectorySize];
 
 	/** If CreateTrajectory is set to 1, we set of Waypoints with states and inputs.
 	 *  DONE: Works correctly from a separate function
 	 *  This will become redundant once I receive trajectory information from Golem
 	 */
-/*	int TrajectoryCreator = 1;
-/*	Data.CreateTrajectory(TrajectoryCreator, Waypoints);
+//	int TrajectoryCreator = 1;
+//	Data.CreateTrajectory(TrajectoryCreator, Waypoints);
 
 	/** Arbitrary max number of iterations for the cost function
 	 * I am not sure this is even needed?

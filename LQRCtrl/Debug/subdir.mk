@@ -4,13 +4,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../LQRCtrl.cpp 
+../LQRCtrl.cpp \
+../NearestWaypoint.cpp \
+../TrajectoryExtractor.cpp 
 
 OBJS += \
-./LQRCtrl.o 
+./LQRCtrl.o \
+./NearestWaypoint.o \
+./TrajectoryExtractor.o 
 
 CPP_DEPS += \
-./LQRCtrl.d 
+./LQRCtrl.d \
+./NearestWaypoint.d \
+./TrajectoryExtractor.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -18,6 +24,13 @@ LQRCtrl.o: ../LQRCtrl.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross G++ Compiler'
 	g++ -std=c++11 -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"LQRCtrl.d" -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+%.o: ../%.cpp
+	@echo 'Building file: $<'
+	@echo 'Invoking: Cross G++ Compiler'
+	g++ -I/usr/include/ncursesw -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

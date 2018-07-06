@@ -22,13 +22,14 @@
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 
-void Containers::CreateTrajectory (const int &TrajectoryCreator, Containers::WaypointSelection Waypoints[Containers::TRAJECTORY_SIZE])
+
+void Containers::CreateTrajectory (const int &TrajectoryCreator, struct Containers::WaypSelect Waypoints[Containers::TRAJECTORY_SIZE])
 	{
 
 	/** Arbitrarily create 5 trajectories to test if it works */
 	int TotalTrajectories = 5;
 	std::string CurrentTrajectory[5] = { "A", "B", "C", "D", "E"};
-	std::vector<float> TrajChange = {0, 0.3, 0.1, 0.05, 1.5};
+	std::vector<float> TrajChange = {0.4, 0.3, 0.1, 0.2, 0.5};
 
 	/** We create a trajectory */
 	if (TrajectoryCreator == 1)
@@ -37,11 +38,11 @@ void Containers::CreateTrajectory (const int &TrajectoryCreator, Containers::Way
 		ofile.open("Trajectory.txt", std::ios::app);
 		ofile << "x y Theta xDot yDot Waypoint Trajectory" << std::endl;
 
-		int mu1 = 0.3;
-		int sigma1 =  0.05;
+		double mu1 = 0.3;
+		double sigma1 =  0.05;
 
-		int mu2 = 0.6;
-		int sigma2 = 0.05;
+		double mu2 = 0.6;
+		double sigma2 = 0.05;
 
 		for (int TrajNum = 0; TrajNum < TotalTrajectories; TrajNum++) {
 
@@ -49,7 +50,7 @@ void Containers::CreateTrajectory (const int &TrajectoryCreator, Containers::Way
 		mu1 = mu1 + TrajChange[TrajNum];
 		mu2 = mu1 + TrajChange[TrajNum];
 
-        	/** This represents the input vector */
+        /** This represents the input vector */
 		double xDot, yDot;
 
 		std::default_random_engine generator;
@@ -61,8 +62,8 @@ void Containers::CreateTrajectory (const int &TrajectoryCreator, Containers::Way
 		yDot = distributiony(generator);
 
 		Waypoints[0].States[0] = xDot; /* we say xdot is the initial state of x and ydot state of y */
-		Waypoints[0].States[0] = xDot;
-		Waypoints[0].States[0] = (xDot+yDot)/2; /** This is just an arbitrary definition of the initial theta */
+		Waypoints[0].States[1] = yDot;
+		Waypoints[0].States[2] = (xDot+yDot)/2; /** This is just an arbitrary definition of the initial theta */
 
 		Waypoints[0].Inputs[0] = xDot;
 		Waypoints[0].Inputs[1] = yDot;
@@ -88,17 +89,23 @@ void Containers::CreateTrajectory (const int &TrajectoryCreator, Containers::Way
 			ofile << x << " " << y << " " << theta << " " << xDot << " " << yDot << " " << i << " " << CurrentTrajectory[TrajNum] << std::endl;
 
 			/** After we have saved them, we clean them so they don't cause issues for the next iteration */
-
-			Waypoints[i].States[0] = 0;
-			Waypoints[i].States[1] = 0;
-			Waypoints[i].States[2] = 0;
-			Waypoints[i].Inputs[0] = 0;
-			Waypoints[i].Inputs[1] = 0;
 			}
 
-		};
+		/** This is very stupid but does what it needs to do
+		 * It needs to clean the container after each run is written to the file
+		 * This will not be used anymore after I'm done with the initial coding so
+		 * I this will be ok for now.
+		 */
+		for (int j = 1; j < Containers::TRAJECTORY_SIZE; j++)
+		{ Waypoints[j].States[0] = 0;
+		  Waypoints[j].States[1] = 0;
+		  Waypoints[j].States[2] = 0;
+		  Waypoints[j].Inputs[0] = 0;
+		  Waypoints[j].Inputs[1] = 0;
+		}
+		}
 		ofile.close();
 		};
-
+	std::cout << "Created trajectories." << std::endl;
 };
 

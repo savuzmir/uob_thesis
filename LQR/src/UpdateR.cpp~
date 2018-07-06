@@ -8,6 +8,7 @@
  */
 
 #include </home/sebastijan/Documents/Golem/packages/Plugin/Data/iLQR/include/Golem/Data/iLQR/iLQR.h>
+#include </home/sebastijan/eclipse-workspace/LQR/src/util.cpp>
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <iostream>
@@ -20,13 +21,8 @@ Eigen::MatrixXd iLQR::UpdateR(const Containers::InputCostMatrix &R, double TrajP
 {
 
 	Util Utility;
-
 	Utility.SizeCheck(R, Utility.InpCoMat());
-
-//	std::cout << " update r checker for R" << R.rows() << R.cols() << std::endl << std::endl;
-
 	Containers::InputCostMatrix RTransfTraj;
-
 	RTransfTraj = Eigen::MatrixXd::Identity(Containers::PARAM_M, Containers::PARAM_M);
 
 	for (int i = 0; i < R.rows(); i++)
