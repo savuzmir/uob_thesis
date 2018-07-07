@@ -5,10 +5,6 @@
  *      Author: sebastijan
  */
 
-
-
-/* TODO: Transfer HistorySeqCheck here */
-
 #include </home/sebastijan/Documents/Golem/packages/Plugin/Data/iLQR/include/Golem/Data/iLQR/iLQR.h>
 #include <stdio.h>
 #include <math.h>
@@ -39,13 +35,13 @@ std::string WaypointCompute::HistorySeqCheck(Containers::WaypSeqHist& UserHistor
 				 if (std::isalpha(*CandidateEl, loc))
 				 {
 					 CurrentTraj.push_back(*CandidateEl);
-				 } /* we are interested just in the case where it is the same as the current one. if the trajectory one is moving to hasnt been recorded in the past
+				 } /* we are interested just in the case where it is the same as the current one. if the trajectory one is moving towards hasn't been recorded in the past
 				    * it most likels means the person is deliberately moving to a place later along the trajectory */
 				 if ((UserHistory.size()> 1) && (UserHistory.back() == CurrentTraj))
 				 /* this will add the current trajectory information into a new container that will be returned */
 				 {BestSolution = Candidate.first;
 				  break;}
-				 else if (UserHistory.empty()) /* this will make a random the best solution if the user history is empty. this can only happen if the person has just started */
+				 else if (UserHistory.empty()) /* this will make a random BestSolution if the user history is empty. this can only happen if the person has just started */
 				 {BestSolution = Candidate.first;
 				  break;}
 				 CurrentTraj = "";
@@ -54,7 +50,7 @@ std::string WaypointCompute::HistorySeqCheck(Containers::WaypSeqHist& UserHistor
 		}
 
 	/* if that procedure yields an empty BestSolution, we arbitrarily pick the last candidate of the loop
-	 * it shouldn't matter which one is picked considering the cost of all of them is very low and comparable
+	 * it shouldn't matter which one is picked considering the cost of all of them are very low and comparable
 	 * as this procedure would yield an empty BestSolution only in the case when any of the offered solutions were not present in the last element of the user History */
 
 	if (BestSolution.empty())
