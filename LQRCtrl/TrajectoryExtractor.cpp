@@ -5,9 +5,6 @@
  *      Author: sebastijan
  */
 
-
-
-
 /** This function receives the potential candidates (i.e. trajectories with waypoints for a given time */
 /*Containers::TrajSeq TrajectoryExtractor(const Containers::NearNeighMap& PotentialCandidates)
 {
