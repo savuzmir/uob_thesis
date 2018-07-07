@@ -3,7 +3,7 @@
 Note: For now, all files are created as independent c++ files. Once the basic functionality will work, I will begin integrating/merging the relevant parts to make them Golem compatible and will remove the independent temporary implementations (i.e. the trajectory creator) that will not be needed in the final system. These will also be then integrated with Golem (i.e. as additional functionality within packages/Plugin/Data)
 
 ## TODO:
-- Test and debug the complete cycle. 
+- Test and debug the complete cycle
 - Finish the plotting function and make the required animation
 - Use SFLM Library through which user input should be obtained
 - Integrate with Golem 
@@ -11,13 +11,13 @@ Note: For now, all files are created as independent c++ files. Once the basic fu
 - Implement the function that checks for matrix sizes 
 - Go through all variable names and make sure they are OK
 - update all comments
-- check where further typedefs should be used.
+- check where further typedefs should be used
 
 ## Done:
 - LQR class that correctly computes LQR and saves it in a map of trajectories. Example:
 FeedbackMatrixMap["A5"] would return the corresponding K matrix for the 5th waypoint of trajectory A. The names are completely arbitrary. 
 - Trajectory creator (CreateTrajectory) will create multiple trajectories saved to a file. These are then read and parsed. 
-- Utility function that checks correct size .
+- Utility function that checks correct size.
 - Compared my implementation of the SolveDARE with github.com/RobotLocomotion/drake and it gives nearly identical results, used theirs due to additional checks that are inside. 
 - Made typedefs for all continously used data structures and added iterator for loops.
 - included header guards to the relevant files.
