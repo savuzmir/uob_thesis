@@ -12,11 +12,6 @@
 #include <iostream>
 
 
-
-/* TODO: Transfer NearestWaypoint here */
-
-
-
 std::string WaypointCompute::NearestWaypoint(const Containers::StateVector& x,
 							Containers::WaypMap& CompleteWaypoints,
 							const Containers::WaypSeq& WaypContainer,
