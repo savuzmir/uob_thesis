@@ -53,9 +53,9 @@ std::string WaypointCompute::HistorySeqCheck(Containers::WaypSeqHist& UserHistor
 		TemporarySave = Candidate.first;
 		}
 
-	/* if that procedure yields and empty BestSolution, we arbitrarily pick the last candidate of the loop
-	 * it shouldnt matter which one is picked considering the cost of all of them is very low and comparable
-	 * as this procedure wold yield an empty BestSolution only in the case when any of the offered solutions was not present in the last element of the user History */
+	/* if that procedure yields an empty BestSolution, we arbitrarily pick the last candidate of the loop
+	 * it shouldn't matter which one is picked considering the cost of all of them is very low and comparable
+	 * as this procedure would yield an empty BestSolution only in the case when any of the offered solutions were not present in the last element of the user History */
 
 	if (BestSolution.empty())
 	{
