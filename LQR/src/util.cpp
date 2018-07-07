@@ -55,35 +55,27 @@ std::string  Util::SizeCheck(const Eigen::MatrixXd &MatrixInput, const std::stri
 	switch(MatrixID) {
 	case 0 :
 		if ((row != n) & (col != n))
-		{Message = 1;
-		break;}
+		{Message = 1;}
 	case 1 :
 		if ((row  != m) & (col != n))
-		{Message  = 1;
-		break;}
+		{Message  = 1;}
 	case 2 :
 		if ((row  != m) & (col != n))
-		{Message = 1;
-		break;}
+		{Message = 1;}
 	case 3 :
 		if ((row  != n) & (col != n))
-		{Message = 1;
-		break;}
+		{Message = 1;}
 	case 4 :
 		if ((row  != n) & (col != n))
-		{Message = 1;
-		break;}
+		{Message = 1;}
 	case 5 :
 		if ((row  != n) & (col != n))
-		{Message = 1;
-		break;}
+		{Message = 1;}
 	case 6 :
 		if ((row  != n) & (col != m))
-		{Message = 1;
-		break;}
+		{Message = 1;}
 	case 999 :
-		Message = 0;
-		break;}
+		Message = 0;}
 
 	if (Message == 1)
 

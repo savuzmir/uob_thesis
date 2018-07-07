@@ -391,6 +391,7 @@ Eigen::MatrixXd iLQR::SolveDARE(
     const Eigen::Ref<const Eigen::MatrixXd>& B,
     const Eigen::Ref<const Eigen::MatrixXd>& Q,
     const Eigen::Ref<const Eigen::MatrixXd>& R) {
+
   int n = B.rows(), m = B.cols();
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(Q);

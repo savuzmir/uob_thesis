@@ -28,7 +28,7 @@ void Containers::CreateTrajectory (const int &TrajectoryCreator, struct Containe
 
 	/** Arbitrarily create 5 trajectories to test if it works */
 	int TotalTrajectories = 5;
-	std::string CurrentTrajectory[5] = { "A", "B", "C", "D", "E"};
+	std::string CurrentTrajectory[TotalTrajectories] = { "A", "B", "C", "D", "E"};
 	std::vector<float> TrajChange = {0.4, 0.3, 0.1, 0.2, 0.5};
 
 	/** We create a trajectory */
