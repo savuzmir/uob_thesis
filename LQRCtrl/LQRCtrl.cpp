@@ -19,6 +19,7 @@
 #include </home/sebastijan/eclipse-workspace/LQR/src/PredictionCostFunc.cpp>
 #include </home/sebastijan/eclipse-workspace/LQR/src/OptimalControl.cpp>
 #include </home/sebastijan/eclipse-workspace/LQR/src/util.cpp>
+#include </home/sebastijan/eclipse-workspace/LQR/src/ReferenceChange.cpp>
 
 
 #include<fstream>
@@ -36,7 +37,7 @@
 #include <stropts.h>
 #include <thread>
 #include <chrono>
-
+#include <SFML/Graphics.hpp>
 #include <termios.h>
 #include <locale>
 
@@ -133,22 +134,15 @@ int main()
 	Containers::TrajSeq::const_iterator TrajIt;
 
 	/** Initialising relevant variables */
-
-	int P_N, P_M;
-	P_N = Data.PARAM_N;
-	P_M	= Data.PARAM_M;
-
 	/** Size of our trajectories; i.e. number of waypoints */
 	int TrajectorySize = Data.TRAJECTORY_SIZE;
 
-
-	double PredictionCost;
+	double PredictionCost, TempWayp;
 
 	/** Define both */
 	double BestTraj = 999;
 	double CurrentCost = 99999;
 
-	double TempWayp;
 
 	/** Container with waypoint information filled up in GetKeys */
 	Containers::WaypSeq WaypContainer;
@@ -168,10 +162,6 @@ int main()
 	Containers::WaypMap CompleteWaypoints; // this is the map with all the waypoints
 	/** Final map with all inputs */
 	Containers::InputMap CompleteInputs; // this is the map with all the inputs
-
-
-	Containers::StateVector WaypointArgument;
-	Containers::InputVector InputArgument;
 
 	/** State vector representing the current state of our system. This will get read out by the system */
 	Containers::StateVector x;
@@ -208,30 +198,22 @@ int main()
 	Containers::uStarMap OptimalInputMap;
 	Containers::xDotMap StateChangeMap;
 
-	Containers::StateVector xNaught = Eigen::VectorXd::Random(Data.PARAM_N, Data.SINGLE);
-	Containers::StateVector xBar = Eigen::VectorXd::Zero(Data.PARAM_N, Data.SINGLE);
-
+	Containers::StateVector xNaught, xBar, xBarGoal, xDot;
 	/** This is a temporary placeholder, will need to be substituted with the trajectory provided by golem */
-	Containers::StateVector xBarGoal(P_N);
-	Containers::StateVector xDot = Eigen::VectorXd::Zero(Data.PARAM_N, Data.SINGLE);
 
-	Containers::InputVector uNaught = Eigen::VectorXd::Random(Data.PARAM_M, Data.SINGLE);
-	Containers::InputVector uBar = Eigen::VectorXd::Zero(Data.PARAM_M, Data.SINGLE);
-	Containers::InputVector u = Eigen::VectorXd::Random(Data.PARAM_M, Data.SINGLE);
-	Containers::InputVector uStar = Eigen::VectorXd::Zero(Data.PARAM_M, Data.SINGLE);
+	Containers::InputVector uNaught, uBar, u, uStar;
 
 	/** These remain identity matrices and are computed at each time step into their exp transforms */
 
-	Eigen::MatrixXd Q = Eigen::MatrixXd::Identity(Data.PARAM_N, Data.PARAM_N);
-	Eigen::MatrixXd R = Eigen::MatrixXd::Identity(Data.PARAM_M, Data.PARAM_M);
+	Containers::StateCostMatrix Q = Eigen::MatrixXd::Identity(Data.PARAM_N, Data.PARAM_N);
+	Containers::InputCostMatrix R = Eigen::MatrixXd::Identity(Data.PARAM_M, Data.PARAM_M);
 
 	/** These represent the Q and R matrices at time t */
 	Containers::StateCostMatrix Qt;
 	Containers::InputCostMatrix Rt;
 
-	Containers::FeedbackMatrix K = Eigen::MatrixXd::Random(Data.PARAM_M, Data.PARAM_N);
-
-	Containers::PMatrix P = Eigen::MatrixXd::Random(Data.PARAM_N, Data.PARAM_N);
+	Containers::FeedbackMatrix K;
+	Containers::PMatrix P;
 
 	/** What should A and B be exactly?
 	 * Now initialised as in Tomasz' thesis, where he mentioned how
@@ -249,8 +231,6 @@ int main()
 		 -0.9,  1,  0,
 		   0, -0.9, 0;
 
-
-
 	// We read the .txt file with trajectories and pack them into 2 maps. one has trajectory IDs, the other has inputs
 	FileParse.ReadFile(TrajFile, CompleteWaypoints, CompleteInputs);
 
@@ -259,6 +239,10 @@ int main()
 
 	// This prepares containers for computation
 	WaypComp.PrepareContainers(WaypContainer, TrajContainer);
+
+	// ##################################################################################### //
+	// ######################### Compute feedback matrices ################################# //
+	// ##################################################################################### //
 
 	/** For trajectory in trajectories; for waypoints in waypoints */
 	for(TrajIt = TrajContainer.begin(); TrajIt != TrajContainer.end(); TrajIt++) {
@@ -269,17 +253,10 @@ int main()
 
 			/** We iteratively solve P and K */
 			// Rt and Qt correspond to the current Waypoint
-
-			/* This is helper that converts the waypoint number to a double that can be used in the Update functions */
-		//	TempWayp = std::stod(*WaypIt);
-
 			Rt = LQR.UpdateR(R, *WaypIt);
 			Qt = LQR.UpdateQ(Q, *WaypIt);
 			P = LQR.SolveDARE(A, B, Qt, Rt);
-			K = LQR.ComputeK (Rt, B, P);
-	//				LQR.ReferenceChange (uBar, xBar, Waypoints[TrajPoint].Inputs, Waypoints[TrajPoint].States, uStar, x);
-	//				Data.System[TrajPoint].StateBar = xBar;
-	//				Data.System[TrajPoint].InputBar = uBar;
+			LQR.ComputeK (Rt, B, P, K);
 
 			/** Before we add information to the feedback matrix we need to convert it into the correct format to have a good identifier */
 			/** We add identifier information that is used to add it into the map */
@@ -291,6 +268,12 @@ int main()
 
 	}
 	std::cout << "Computed all the K matrices." << std::endl;
+
+
+	// ##################################################################################### //
+	// ######################### Receive user input ######################################## //
+	// ##################################################################################### //
+
 
 	// TODO: Put into external function and replace with the SFLM library
 
@@ -311,14 +294,15 @@ int main()
 
 	    {
 	    	x = x + xDot;
+	    	std::cout << "System value: " << x << std::endl << std::endl;
 	    }
 
-		std::cout << "first wayp: " << NearWayp << std::endl;
+		std::cout << "First wayp: " << NearWayp << std::endl;
 
 		// We compute the nearest neighbour to our current state (x) from the map of all waypoints and both containers
 		NearWayp = WaypComp.NearestWaypoint(x, CompleteWaypoints, WaypContainer, TrajContainer, UserHistory, NearWayp);
 
-		std::cout << "works: " << NearWayp << std::endl;
+		std::cout << "Wayp after computation: " << NearWayp << std::endl;
 
 	    if (LinuxKbhit()) // Checks for keyhits. if it records one it goes into the loop.
 	    {
@@ -372,21 +356,22 @@ int main()
 		/* convert the NearWayp to a double */
 		TempWayp = std::stoi(NearWayp);
 
+		// ##################################################################################### //
+		// ######################### Select best trajectory based on input ##################### //
+		// ##################################################################################### //
+
+
 		for(TrajIt = TrajContainer.begin(); TrajIt != TrajContainer.end(); TrajIt++)
 		{
 
 			PredIdentifier = *TrajIt + NearWayp;
 
-			/* convert due to input specifics */
-			WaypointArgument = CompleteWaypoints[PredIdentifier];
-			InputArgument = CompleteInputs[PredIdentifier];
-
-			SystemHat = LQR.Prediction(A, B, uUser, x, WaypointArgument, InputArgument);
+			LQR.Prediction(A, B, uUser, x, CompleteWaypoints[PredIdentifier], CompleteInputs[PredIdentifier], SystemHat);
 
 			Rt = LQR.UpdateR(R, TempWayp);
 			Qt = LQR.UpdateQ(Q, TempWayp);
 
-			PredictionCost = LQR.PredictionCostFunc(SystemHat.StateHat, SystemHat.InputHat, Rt, Qt);
+			LQR.PredictionCostFunc(SystemHat.StateHat, SystemHat.InputHat, Rt, Qt, PredictionCost);
 
 			if (CurrentCost > PredictionCost)
 				{CurrentCost = PredictionCost;
@@ -398,8 +383,15 @@ int main()
 		OptWaypoint = OptTraj + NearWayp;
 	    UserHistory.push_back(OptTraj);
 
+	    std::cout << "The optimal trajectory: " << OptWaypoint << std::endl << std::endl;
 	    /** Select correct trajectory + correct waypoint */
-	    uStar = LQR.OptimalControl(x, uUser, FeedbackMatrixMap[OptWaypoint]);
+	    LQR.OptimalControl(x, uUser, FeedbackMatrixMap[OptWaypoint], uStar);
+		LQR.ReferenceChange (uBar, xBar, CompleteInputs[OptWaypoint], CompleteWaypoints[OptWaypoint], uStar, x);
+
+
+	    /* we compute current - optimal
+	     * for both system and ipnut
+	     */
 
 	    xDot = A*xBar + B*uStar;
 
