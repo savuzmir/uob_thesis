@@ -180,7 +180,7 @@ class iLQR
 {
 	public:
 
-	Eigen::MatrixXd SolveDARE(
+	Containers::PMatrix SolveDARE(
 		    const Eigen::Ref<const Eigen::MatrixXd>& A,
 		    const Eigen::Ref<const Eigen::MatrixXd>& B,
 		    const Eigen::Ref<const Eigen::MatrixXd>& Q,
@@ -192,7 +192,7 @@ class iLQR
 		    const Containers::StateCostMatrix& Q,
 		    const Containers::InputCostMatrix& R);
 
-	Eigen::VectorXd OptimalControl (const Containers::StateVector &x, const Containers::InputVector &uNaught, const Containers::FeedbackMatrix &K);
+	void OptimalControl (const Containers::StateVector &x, const Containers::InputVector &uNaught, const Containers::FeedbackMatrix &K, Containers::InputVector &uStar);
 
 	void ReferenceChange (Containers::InputVector &uBar,  Containers::StateVector &xBar,
 						  const Containers::InputVector &uNaught, const Containers::StateVector &xNaught,
@@ -204,17 +204,19 @@ class iLQR
 						 const Containers::StateCostMatrix &Qt, const Containers::InputVector &uBar, const Containers::StateVector &xBarGoal,
 						 const Containers::InputCostMatrix &Rt,  double TrajPoint, double GoalState, int SumVar, double SummedCost);
 
-	Eigen::MatrixXd ComputeK (const Containers::InputCostMatrix &Rt, const Containers::ControlMatrix &B, const Containers::PMatrix &P);
+	void ComputeK (const Containers::InputCostMatrix &Rt, const Containers::ControlMatrix &B, const Containers::PMatrix &P, Containers::FeedbackMatrix &K);
 
-	Eigen::MatrixXd UpdateQ (const Containers::StateCostMatrix &Q, double TrajPoint);
-	Eigen::MatrixXd UpdateR (const Containers::InputCostMatrix &R, double TrajPoint);
+	Containers::StateCostMatrix UpdateQ (const Containers::StateCostMatrix &Q, double TrajPoint);
+	Containers::InputCostMatrix UpdateR (const Containers::InputCostMatrix &R, double TrajPoint);
 
-    struct Containers::SystemPrediction Prediction (const Containers::TransitionMatrix &A, const Containers::ControlMatrix &B,
+    void Prediction (const Containers::TransitionMatrix &A, const Containers::ControlMatrix &B,
 											 	    const Containers::InputVector &uUser, const Containers::StateVector &x,
-												    const Containers::StateVector &TrajectoryState, const Containers::InputVector &TrajectoryInput);
+												    const Containers::StateVector &TrajectoryState, const Containers::InputVector &TrajectoryInput,
+													struct Containers::SystemPrediction &Points);
 
-    double PredictionCostFunc(const Containers::StateVector &xHat, const Containers::InputVector &uHat,
-    							  const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt);
+    void PredictionCostFunc(const Containers::StateVector &xHat, const Containers::InputVector &uHat,
+    							  const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt,
+								  double PredictionCost);
 
 };
 
