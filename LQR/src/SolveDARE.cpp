@@ -386,7 +386,7 @@ void reorder_eigen(Eigen::Ref<Eigen::MatrixXd> S, Eigen::Ref<Eigen::MatrixXd> T,
  * accuracy, together with more thorough tests.
  */
 
-Eigen::MatrixXd iLQR::SolveDARE(
+Containers::PMatrix iLQR::SolveDARE(
     const Eigen::Ref<const Eigen::MatrixXd>& A,
     const Eigen::Ref<const Eigen::MatrixXd>& B,
     const Eigen::Ref<const Eigen::MatrixXd>& Q,

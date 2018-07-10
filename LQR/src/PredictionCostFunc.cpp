@@ -11,8 +11,9 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
-double iLQR::PredictionCostFunc(const Containers::StateVector &xHat, const Containers::InputVector &uHat,
-							    const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt)
+void iLQR::PredictionCostFunc(const Containers::StateVector &xHat, const Containers::InputVector &uHat,
+							  const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt,
+							  double PredictionCost)
 {
 
     Util Utility;
@@ -23,7 +24,7 @@ double iLQR::PredictionCostFunc(const Containers::StateVector &xHat, const Conta
 	Utility.SizeCheck(Rt, Utility.InpCoMat());
 	Utility.SizeCheck(Qt, Utility.StCoMat());
 
-	double Cost, StateCost, InputCost;
+	double StateCost, InputCost;
 	Eigen::RowVectorXd xHatT;
 	Eigen::RowVectorXd uHatT;
 
@@ -32,7 +33,6 @@ double iLQR::PredictionCostFunc(const Containers::StateVector &xHat, const Conta
 
 	StateCost = xHatT*Qt*xHat;
 	InputCost = uHatT*Rt*uHat;
-	Cost = StateCost + InputCost;
+	PredictionCost = StateCost + InputCost;
 
-	return Cost;
 }

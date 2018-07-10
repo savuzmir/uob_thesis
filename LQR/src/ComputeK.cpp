@@ -26,7 +26,7 @@
  * DONE: added matrix size checker 
  */
 
-Eigen::MatrixXd iLQR::ComputeK (const Containers::InputCostMatrix &Rt, const Containers::ControlMatrix &B, const Containers::PMatrix &P)
+void iLQR::ComputeK (const Containers::InputCostMatrix &Rt, const Containers::ControlMatrix &B, const Containers::PMatrix &P, Containers::FeedbackMatrix &K)
 
 {
 	// Check size matrices
@@ -34,12 +34,6 @@ Eigen::MatrixXd iLQR::ComputeK (const Containers::InputCostMatrix &Rt, const Con
 	Utility.SizeCheck(Rt, Utility.InpCoMat());
 	Utility.SizeCheck(B, Utility.ConMat());
 	Utility.SizeCheck(P, Utility.PMat());
-
-	// Initialise local variables
-	Containers::FeedbackMatrix K;
-	Containers::InputCostMatrix L, RInv;
-
-	K = Eigen::MatrixXd::Zero(Containers::PARAM_M, Containers::PARAM_N);
 
 	/** Cholesky decomposition */
 
@@ -53,8 +47,6 @@ Eigen::MatrixXd iLQR::ComputeK (const Containers::InputCostMatrix &Rt, const Con
 //	clock_t end = clock();
 //	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 //	std::cout << elapsed_secs << std::endl;
-
-	return K;
 
 }
 

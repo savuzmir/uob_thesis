@@ -16,7 +16,7 @@
 
 // TODO: Matrix size check
 
-Eigen::MatrixXd iLQR::UpdateR(const Containers::InputCostMatrix &R, double TrajPoint)
+Containers::InputCostMatrix  iLQR::UpdateR(const Containers::InputCostMatrix &R, double TrajPoint)
 {
 
 	Util Utility;

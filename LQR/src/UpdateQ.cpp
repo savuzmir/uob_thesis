@@ -14,7 +14,7 @@
 #include <string>
 #include <stdio.h>
 
-Eigen::MatrixXd iLQR::UpdateQ(const Containers::StateCostMatrix &Q, double TrajPoint)
+Containers::StateCostMatrix  iLQR::UpdateQ(const Containers::StateCostMatrix &Q, double TrajPoint)
 {
 
 	Util Utility;

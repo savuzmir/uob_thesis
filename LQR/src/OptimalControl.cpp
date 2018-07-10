@@ -17,7 +17,8 @@
 
 /** Takes the uNaught; this should be user input in this case from which we subtract the K matrix and current state */
 
-Eigen::VectorXd iLQR::OptimalControl (const Containers::StateVector &x, const Containers::InputVector &uNaught, const Containers::FeedbackMatrix &K)
+void iLQR::OptimalControl (const Containers::StateVector &x, const Containers::InputVector &uNaught,
+						   const Containers::FeedbackMatrix &K, Containers::InputVector &uStar)
 {
 
 	 Util Utility;
@@ -26,10 +27,6 @@ Eigen::VectorXd iLQR::OptimalControl (const Containers::StateVector &x, const Co
 	 Utility.SizeCheck(uNaught, Utility.InpVec());
 	 Utility.SizeCheck(K, Utility.FedMat());
 
-	Containers::InputVector uStar;
-
 	uStar = uNaught - K*x;
-
-	return uStar;
 }
 
