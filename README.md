@@ -23,4 +23,4 @@ FeedbackMatrixMap["A5"] would return the corresponding K matrix for the 5th wayp
 - Made the nearest neighbour computation handle more than one nearest neighbour. In that case it will conservatively pick the     trajectory that has been prefered so far by the user.
 - Substantially overhauled the nearest neighbour (i.e. the way it parses trajectories and picks the current trajectory) 
 - A complete cycle of 1. import trajectories (this will be replaced with Golem when I will start integrating it), 2. compute Kmatrix for all trajectories, waypoints, and name it correspondingly, 3. wait for user input and obtain system state that are then used, 4. find nearest waypoint of a trajectory, make prediction of the next state and compute the optimal input for the desired trajectory and feed that back. 
-- Use SFLM Library through which user input should be obtained
+- Use SFML Library through which user input should be obtained
