@@ -4,7 +4,6 @@ Note: For now, all files are created as independent c++ files. Once the basic fu
 
 ## TODO:
 - Test and debug the complete cycle
-- Finish the plotting function and make the required animation
 - Integrate with Golem 
 - Make the code more efficient and less wasteful. Most likely, a lot more memory than needed is being used in parts at the moment due to me not being familiar with best practices 
 - Implement the function that checks for matrix sizes 
@@ -24,3 +23,4 @@ FeedbackMatrixMap["A5"] would return the corresponding K matrix for the 5th wayp
 - Substantially overhauled the nearest neighbour (i.e. the way it parses trajectories and picks the current trajectory) 
 - A complete cycle of 1. import trajectories (this will be replaced with Golem when I will start integrating it), 2. compute Kmatrix for all trajectories, waypoints, and name it correspondingly, 3. wait for user input and obtain system state that are then used, 4. find nearest waypoint of a trajectory, make prediction of the next state and compute the optimal input for the desired trajectory and feed that back. 
 - Use SFML Library through which user input should be obtained
+- plotter.py now works. It needs some tidying up at a later point.
