@@ -32,93 +32,12 @@
 #include <string>
 #include <sstream>
 #include <map>
-#include <sys/select.h>
-#include <sys/ioctl.h>
 #include <stropts.h>
 #include <thread>
 #include <chrono>
-#include <SFML/Graphics.hpp>
-#include <termios.h>
 #include <locale>
 
-
-/** Custom khbit() and getchar() implementation for Linux obtained from:
- * https://stackoverflow.com/questions/7469139/what-is-equivalent-to-getch-getche-in-linux
- * https://stackoverflow.com/questions/29335758/using-kbhit-and-getch-on-linux
- * */
-
-int LinuxKbhit() {
-    static const int STDIN = 0;
-    static bool initialized = false;
-
-    if (! initialized) {
-        // Use termios to turn off line buffering
-        termios term;
-        tcgetattr(STDIN, &term);
-        term.c_lflag &= ~ICANON;
-        tcsetattr(STDIN, TCSANOW, &term);
-        setbuf(stdin, NULL);
-        initialized = true;
-    }
-
-    int bytesWaiting;
-    ioctl(STDIN, FIONREAD, &bytesWaiting);
-    return bytesWaiting;
-}
-
-static struct termios old, nw;
-
-/* Initialize new terminal i/o settings */
-void initTermios(int echo)
-{
-  tcgetattr(0, &old); /* grab old terminal i/o settings */
-  nw= old; /* make new settings same as old settings */
-  nw.c_lflag &= ~ICANON; /* disable buffered i/o */
-  if (echo) {
-	  nw.c_lflag |= ECHO; /* set echo mode */
-  } else {
-	  nw.c_lflag &= ~ECHO; /* set no echo mode */
-  }
-  tcsetattr(0, TCSANOW, &nw); /* use these new terminal i/o settings now */
-}
-
-/* Restore old terminal i/o settings */
-void resetTermios(void)
-{
-  tcsetattr(0, TCSANOW, &old);
-}
-
-/* Read 1 character - echo defines echo mode */
-char getch_(int echo)
-{
-  char ch;
-  initTermios(echo);
-  ch = getchar();
-  resetTermios();
-  return ch;
-}
-
-/* Read 1 character without echo */
-char getch(void)
-{
-  return getch_(0);
-}
-
-/* Read 1 character with echo */
-char getche(void)
-{
-  return getch_(1);
-}
-
-
-/** End of custom implementation */
-
-
-
-//------------------------------------------------------------------------------
-
-
-
+#include <SFML/Graphics.hpp>
 
 int main()
 {
@@ -128,6 +47,11 @@ int main()
 	Containers Data;
 	FileParser FileParse;
 	WaypointCompute WaypComp;
+	InputSFML Input;
+
+	Containers::WIDTH Width = sf::VideoMode::getDesktopMode().width;
+	Containers::HEIGHT Height = sf::VideoMode::getDesktopMode().height;
+	Containers::NORM_CONST NormFactor = 0.5;
 
 	/** these are same data structures (i.e. a vector of strings) but I use 2 different typedefs for clarity purposes */
 	Containers::WaypSeq::const_iterator WaypIt;
@@ -140,8 +64,7 @@ int main()
 	double PredictionCost, TempWayp;
 
 	/** Define both */
-	double BestTraj = 999;
-	double CurrentCost = 99999;
+	double CurrentCost = 9e500;
 
 
 	/** Container with waypoint information filled up in GetKeys */
@@ -149,6 +72,10 @@ int main()
 
 	/** This stores the history of one's path */
 	Containers::WaypSeqHist UserHistory;
+	Containers::WaypSeqHist UserHistoryStorage;
+	Containers::InputHistory InputHistory;
+	Containers::InputHistory OptimalInputHistory;
+	Containers::SystemHistory StateHistory;
 
 	/** Container with trajectory information filled up in GetKeys */
 	Containers::TrajSeq TrajContainer;
@@ -228,8 +155,10 @@ int main()
 	/** Hard code for now */
 	Containers::TransitionMatrix A;
 	A <<   1,   0,  0,
-		 -0.9,  1,  0,
-		   0, -0.9, 0;
+		   -0.9,   1,  0,
+		   0,   -0.9,  0;
+
+
 
 	// We read the .txt file with trajectories and pack them into 2 maps. one has trajectory IDs, the other has inputs
 	FileParse.ReadFile(TrajFile, CompleteWaypoints, CompleteInputs);
@@ -244,9 +173,9 @@ int main()
 	// ######################### Compute feedback matrices ################################# //
 	// ##################################################################################### //
 
+
 	/** For trajectory in trajectories; for waypoints in waypoints */
 	for(TrajIt = TrajContainer.begin(); TrajIt != TrajContainer.end(); TrajIt++) {
-
 
 		/** Recheck whether we want to iterate until the last element */
 		for(WaypIt = WaypContainer.begin(); WaypIt != WaypContainer.end(); WaypIt++) {
@@ -274,16 +203,11 @@ int main()
 	// ######################### Receive user input ######################################## //
 	// ##################################################################################### //
 
-
-	// TODO: Put into external function and replace with the SFLM library
-
 	bool repeat = true;
-	int i = 1;
-	while (repeat)
+	while (repeat) // this should be while the euclidean distance of the system is far from the goal state
 		{
 		// when no key is hit, we are here, so this is where some of the code needs to be
-	    std::cout << '*';
-	    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	    /** Read system state */
 	    /** In the later version we should get this from Golem */
@@ -294,63 +218,20 @@ int main()
 
 	    {
 	    	x = x + xDot;
-	    	std::cout << "System value: " << x << std::endl << std::endl;
+	    	std::cout << "System state: " << std::endl << x << std::endl << std::endl;
 	    }
-
-		std::cout << "First wayp: " << NearWayp << std::endl;
 
 		// We compute the nearest neighbour to our current state (x) from the map of all waypoints and both containers
 		NearWayp = WaypComp.NearestWaypoint(x, CompleteWaypoints, WaypContainer, TrajContainer, UserHistory, NearWayp);
 
-		std::cout << "Wayp after computation: " << NearWayp << std::endl;
+		std::cout << "Found nearest neighbour: " << NearWayp << std::endl;
 
-	    if (LinuxKbhit()) // Checks for keyhits. if it records one it goes into the loop.
-	    {
-	    char ch = getch();
-	            switch (ch)
-	            {
-	                case 27:               // press ESC to exit
-	                    repeat = false;
-	                    break;
+		/** this returns data from the corresponding function */
+		uUser = Input.UserInput(Width, Height, uUser, NormFactor);
 
-	                /** W */
-	                case 119:
-	                	std::cout << "forward" << std::endl;
-	                	uUser << 0.5,
-	                			 0;
-	                	break;
+		/** convert into appropriate format */
 
-	                /** E */
-	                case 101:
-	                	std::cout << "diagonal right" << std::endl;
-	                	uUser << 0.5,
-	                		     -0.5;
-	                	break;
-
-	                /** D */
-	                case 100:
-	                	std::cout << "right" << std::endl;
-	                	uUser <<  0,
-	                		     -0.5;
-	                	break;
-
-	                /** Q */
-	                case 113:
-	                	std::cout << "diagonal left" << std::endl;
-	                	uUser << 0.5,
-	                		     0.5;
-	                	break;
-
-	                /** A */
-	                case 97:
-	                	std::cout << "left" << std::endl;
-	                	uUser << 0,
-	                		     0.5;
-	                	break;
-	            }
-	        }
-
-	    /* for current waypoint */
+		/* for current waypoint */
 	    /** look through all trajectories */
 
 		/* convert the NearWayp to a double */
@@ -367,68 +248,103 @@ int main()
 			PredIdentifier = *TrajIt + NearWayp;
 
 			LQR.Prediction(A, B, uUser, x, CompleteWaypoints[PredIdentifier], CompleteInputs[PredIdentifier], SystemHat);
-
 			Rt = LQR.UpdateR(R, TempWayp);
 			Qt = LQR.UpdateQ(Q, TempWayp);
-
 			LQR.PredictionCostFunc(SystemHat.StateHat, SystemHat.InputHat, Rt, Qt, PredictionCost);
+
+			std::cout << "The cost for trajectory point: " << PredIdentifier << " is: " << PredictionCost << std::endl;
+			std::cout << "It calculated the trajectory state: " << std::endl << CompleteWaypoints[PredIdentifier] << std::endl;
+			std::cout << "It calculated the trajectory input: " << std::endl << CompleteInputs[PredIdentifier] << std::endl;
+			std::cout << "This was the prediction for the state: " << std::endl << SystemHat.StateHat << std::endl;
+			std::cout << "This was the prediction for the input: " << std::endl << SystemHat.InputHat << std::endl;
+
 
 			if (CurrentCost > PredictionCost)
 				{CurrentCost = PredictionCost;
 				OptTraj = *TrajIt;} // optimal trajectory
 			}
-		BestTraj = 999;
-		CurrentCost = 99999;
-
+		CurrentCost = 9e500;
 		OptWaypoint = OptTraj + NearWayp;
-	    UserHistory.push_back(OptTraj);
 
-	    std::cout << "The optimal trajectory: " << OptWaypoint << std::endl << std::endl;
+	    UserHistory.push_back(OptTraj);
+	    UserHistoryStorage.push_back(OptWaypoint);
+
+	    std::cout << "The optimal trajectory: " << OptWaypoint << " has a cost of: " << PredictionCost << std::endl << std::endl;
 	    /** Select correct trajectory + correct waypoint */
+
+	    std::cout << "Before rereferencing, user input: " << std::endl << uUser << std::endl << std::endl;
+	    std::cout << "Before rereferencing, K matrix: " << std::endl << FeedbackMatrixMap[OptWaypoint] << std::endl << std::endl;
+
 	    LQR.OptimalControl(x, uUser, FeedbackMatrixMap[OptWaypoint], uStar);
-		LQR.ReferenceChange (uBar, xBar, CompleteInputs[OptWaypoint], CompleteWaypoints[OptWaypoint], uStar, x);
+
+	    std::cout << "Before rereferencing, but after computing, optimal control: " << std::endl << uStar << std::endl << std::endl;
+
+	    LQR.ReferenceChange (uBar, xBar, CompleteInputs[OptWaypoint], CompleteWaypoints[OptWaypoint], uStar, x);
+
+	    std::cout << "After rereferencing, state: " << std::endl << xBar << std::endl << std::endl;
+	    std::cout << "After rereferencing, input: " << std::endl << uBar << std::endl << std::endl;
+
+
+
+
+		/*InputHistory.push_back(uUser);
+		OptimalInputHistory.push_back(uStar);
+		StateHistory.push_back(x);*/
 
 
 	    /* we compute current - optimal
 	     * for both system and ipnut
 	     */
 
-	    xDot = A*xBar + B*uStar;
+	    xDot = A*xBar + B*uBar;
 
+	    std::cout << "This is solution to the state space equation: " << std::endl << xDot << std::endl << std::endl;
+
+	    std::cout << "|=======================================================================|" << std::endl;
+
+	    /* Add optimal control to the dataset that will be written */
 
 	    }
 
-	/*	Here, we need code that will add additional things
-	 *
-	 * std::ofstream ofile;
-		ofile.open("trajectory.txt", std::ios::app);
-		for (int i = 1; i < Data.TRAJECTORY_SIZE; i++)
-					{
-			ofile << x << " " << y << " " << theta << " " << xDot << " " << yDot << std::endl;
-			}
+	/*	Here, we need code that will add additional things */
+
+/*	std::ofstream ofile;
+	ofile.open("UserHistory.txt", std::ios::app);
+//	ofile << "trajpoint" << std::endl;
+	for (Containers::WaypSeqHist::const_iterator el = UserHistoryStorage.begin(); el != UserHistoryStorage.end(); el++)
+		{
+		ofile << *el << std::endl;
+		}
 		ofile.close();
-		};
-	*/
 
+	std::ofstream ffile;
+	ffile.open("InputHistory.txt", std::ios::app);
+//	ffile << "x " << "y " << std::endl;
+	for (Containers::InputHistory::iterator el1 = InputHistory.begin(); el1 != InputHistory.end(); el1++)
+		{
+		ffile << (*el1)[0] << " " << (*el1)[1] << std::endl;
+		}
+		ffile.close();
 
-/*	OptimalInputMap[TrajPoint] << std::endl;
-	xDotMap[TrajPoint] << std::endl;
+	std::ofstream sfile;
+	sfile.open("OptimalInputHistory.txt", std::ios::app);
+//	sfile << "x " << "y " << std::endl;
+	for (Containers::InputHistory::iterator el2 = OptimalInputHistory.begin(); el2 != OptimalInputHistory.end(); el2++)
+		{
+		sfile << (*el2)[0] << " " << (*el2)[1] << std::endl;
+		}
+		sfile.close();
+
+	std::ofstream dfile;
+	dfile.open("StateHistory.txt", std::ios::app);
+//	dfile << "x " << " y " << " theta " << std::endl;
+	for (Containers::SystemHistory::iterator el3 = StateHistory.begin(); el3 != StateHistory.end(); el3++)
+		{
+		dfile << (*el3)[0] << " " << (*el3)[1] << " " << (*el3)[2] << std::endl;
+		}
+		dfile.close();
 */
 
-	// DONE - checked to get keyboard information
-	/** Check the ASCII value
-
-	 char c;
-	 std::cout << "Enter a character: ";
-	 std::cin >> c;
-	 std::cout << "ASCII Value of " << c << " is " << int(c);
-
-	  *  W - 119
-	  *  E - 101
-	  *  D - 100
-	  *  Q - 113
-	  *  A - 97
-	  *  */
 return 0;
 }
 

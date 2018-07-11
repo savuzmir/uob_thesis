@@ -12,6 +12,11 @@
 #include <iostream>
 
 
+
+/* TODO: Transfer NearestWaypoint here */
+
+
+
 std::string WaypointCompute::NearestWaypoint(const Containers::StateVector& x,
 							Containers::WaypMap& CompleteWaypoints,
 							const Containers::WaypSeq& WaypContainer,
@@ -42,8 +47,6 @@ std::string WaypointCompute::NearestWaypoint(const Containers::StateVector& x,
 
 	  /** This might be the easiest way to manipulate the NearWayp value in and outside this function */
 	  Wayp = std::stoi(NearWayp);
-
-	  std::cout << "what is the wayp: " << Wayp << std::endl;
 
 /*	Keep this in for now in case I will need it later.
 	std::cout << "this is the x: " << x << std::endl << std::endl;
@@ -76,8 +79,6 @@ std::string WaypointCompute::NearestWaypoint(const Containers::StateVector& x,
 	   *  it might make sense to check for the currrent and next one */
 
 		Identifier =  *TrajIt + std::to_string(WaypContainer[Wayp]);
-
-		std::cout << "what is the identifier: " << Identifier << std::endl;
 
 	  /** Compute Euclidean distance - this should also be changed to make it work for more than 3 states
 		* TODO: Make this generalisable to more dimensions */

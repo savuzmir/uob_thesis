@@ -26,4 +26,6 @@ void WaypointCompute::PrepareContainers(Containers::WaypSeq& WaypContainer, Cont
 
     WaypContainer.resize( std::distance(WaypContainer.begin(), WaypIt) );
 	TrajContainer.resize( std::distance(TrajContainer.begin(), TrajIt) );
+
+	std::cout << "Done preparing containers." << std::endl;
 	}
