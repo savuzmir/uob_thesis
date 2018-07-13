@@ -34,7 +34,8 @@
 #include <sstream>
 #include <map>
 #include <vector>
-#include<fstream>
+#include <fstream>
+#include <SFML/Graphics.hpp>
 
 /*
 
@@ -83,11 +84,10 @@ class Containers
 			PARAM_M,
 			/** For the M parameter */
 			PARAM_N,
-			/* Number of main typedefs, used in util.cpp */
+			/** Number of main typedefs, used in util.cpp */
 			MATRIX_NUM = 7,
-			/* Number of points in trajectory */
-			TRAJECTORY_SIZE = 20,
-
+			/** Number of points in trajectory */
+			TRAJECTORY_SIZE = 15,
 		};
 
 	public:
@@ -99,19 +99,6 @@ class Containers
 		typedef Eigen::Matrix<double, PARAM_M, PARAM_M> InputCostMatrix; /** *R* Input cost matrix. Initialised as an identity matrix  and transformed */
 		typedef Eigen::Matrix<double, PARAM_N, PARAM_N> PMatrix; /** *P* Result of computing the Discrete algebraic Riccatti equation */
 		typedef Eigen::Matrix<double, PARAM_N, PARAM_N> TransitionMatrix; /** *A* Transition dynamics of the system */
-
-			/* Tomazs' thesis, it was this:
-							 0, 0, 1, 0,
-							 0, 0, 0, 1,
-							 0, 0, -0.9, 0,
-							 0, 0, 0, -0.9;
-
-			   In our case, it should likely be something like:
-			   	   	   	       1,   0,  0
-			   	   	   	     -0.9,  1,  0
-			   	   	   	       0, -0.9, 0
-			 */
-
 		typedef Eigen::Matrix<double, PARAM_N, SINGLE> StateVector; /** *x* States of our SS model */
 		typedef Eigen::Matrix<double, PARAM_M, SINGLE> InputVector; /** *u* Input control of our SS model */
 
@@ -130,7 +117,8 @@ class Containers
 		typedef std::vector<int> WaypSeq;
 		typedef std::vector<std::string> TrajSeq;
 		typedef std::vector<std::string> WaypSeqHist;
-
+		typedef std::vector<InputVector> InputHistory;
+		typedef std::vector<StateVector> SystemHistory;
 
 		/** TrajPoint can be a std::string where we would have each trajectory in a given scene
 		 * marked as a name (e.g. A, B, C) after that, we would add the current waypoint in the
@@ -155,15 +143,14 @@ class Containers
 			{
 			Eigen::Matrix<double, PARAM_M, SINGLE> InputBar;
 			Eigen::Matrix<double, PARAM_N, SINGLE> StateBar;
-			} System [TRAJECTORY_SIZE];
+			};
 
 
 		struct SystemPrediction
 			{
 			 Eigen::Matrix<double, PARAM_M, SINGLE> InputHat;
 			 Eigen::Matrix<double, PARAM_N, SINGLE> StateHat;
-			} Points [TRAJECTORY_SIZE];
-
+			};
 
 	/** Create maps */
 
@@ -172,6 +159,12 @@ class Containers
 	typedef std::map<std::string, StateVector> xDotMap;
 
 	void CreateTrajectory (const int &TrajectoryCreator, struct WaypSelect Waypoints[Containers::TRAJECTORY_SIZE]);
+
+	const typedef double WIDTH;
+	const typedef double HEIGHT;
+
+	/** We obtain window data that is used a constant and normalisation factor */
+	const typedef double NORM_CONST;
 
 };
 
@@ -185,6 +178,12 @@ class iLQR
 		    const Eigen::Ref<const Eigen::MatrixXd>& B,
 		    const Eigen::Ref<const Eigen::MatrixXd>& Q,
 		    const Eigen::Ref<const Eigen::MatrixXd>& R);
+
+	Containers::PMatrix SolveCARE(
+		    const Eigen::Ref<const Eigen::MatrixXd>& A,
+		    const Eigen::Ref<const Eigen::MatrixXd>& B,
+		    const Eigen::Ref<const Eigen::MatrixXd>& Q,
+			const Eigen::Ref<const Eigen::MatrixXd>& R);
 
 	Eigen::MatrixXd old_SolveDARE(
 		    const Containers::TransitionMatrix& A,
@@ -204,7 +203,9 @@ class iLQR
 						 const Containers::StateCostMatrix &Qt, const Containers::InputVector &uBar, const Containers::StateVector &xBarGoal,
 						 const Containers::InputCostMatrix &Rt,  double TrajPoint, double GoalState, int SumVar, double SummedCost);
 
-	void ComputeK (const Containers::InputCostMatrix &Rt, const Containers::ControlMatrix &B, const Containers::PMatrix &P, Containers::FeedbackMatrix &K);
+	void ComputeK (const Containers::InputCostMatrix &Rt, const Containers::ControlMatrix &B,
+				   const Containers::PMatrix &P, Containers::FeedbackMatrix &K,
+				   const Containers::TransitionMatrix &A, const int Discrete);
 
 	Containers::StateCostMatrix UpdateQ (const Containers::StateCostMatrix &Q, double TrajPoint);
 	Containers::InputCostMatrix UpdateR (const Containers::InputCostMatrix &R, double TrajPoint);
@@ -215,8 +216,8 @@ class iLQR
 													struct Containers::SystemPrediction &Points);
 
     void PredictionCostFunc(const Containers::StateVector &xHat, const Containers::InputVector &uHat,
-    							  const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt,
-								  double PredictionCost);
+    					    const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt,
+						    double &PredictionCost);
 
 };
 
@@ -270,6 +271,13 @@ public:
 								Containers::WaypSeqHist& UserHistory,
 								std::string currwayp);
 
+};
+
+class InputSFML
+{
+public:
+
+	Containers::InputVector UserInput(Containers::WIDTH Width, Containers::HEIGHT Height, Containers::InputVector &uUser, Containers::NORM_CONST NormFactor);
 };
 
 //------------------------------------------------------------------------------
