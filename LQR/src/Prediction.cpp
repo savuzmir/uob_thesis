@@ -19,12 +19,13 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
-struct Containers::SystemPrediction iLQR::Prediction(const Containers::TransitionMatrix &A, const Containers::ControlMatrix &B,
+void iLQR::Prediction(const Containers::TransitionMatrix &A, const Containers::ControlMatrix &B,
 													 const Containers::InputVector &uUser, const Containers::StateVector &x,
-													 const Containers::StateVector &TrajectoryState, const Containers::InputVector &TrajectoryInput)
+													 const Containers::StateVector &TrajectoryState, const Containers::InputVector &TrajectoryInput,
+													 struct Containers::SystemPrediction &Points)
 {
 
-	struct Containers::SystemPrediction Points;
+//	struct Containers::SystemPrediction Points;
 
         Util Utility;
 
@@ -35,7 +36,7 @@ struct Containers::SystemPrediction iLQR::Prediction(const Containers::Transitio
 	Utility.SizeCheck(TrajectoryInput, Utility.InpVec());
 	Utility.SizeCheck(TrajectoryState, Utility.StVec());
 
-	Containers::StateVector xFiCurr, xFiNext, xHat, xFi;
+	Containers::StateVector xHat, xPhi;
 	Containers::InputVector uHat;
 
 	/* Do we first compute the uHat from the current user input
@@ -46,17 +47,13 @@ struct Containers::SystemPrediction iLQR::Prediction(const Containers::Transitio
 	uHat = uUser - TrajectoryInput;
 
 	/** Integrating current and next */
-	xFiCurr = A*x + B*uUser;
-	xFiNext = A*x + B*uHat;
+	xPhi = A*x + B*uHat;
 
-	/** Then we just sum of both the current and the next one */
-	xFi = xFiCurr + xFiNext;
-	xHat = xFi - TrajectoryState;
+	xHat = xPhi - TrajectoryState;
 
 	Points.InputHat = uHat;
 	Points.StateHat = xHat;
 
-	return Points;
 }
 
 

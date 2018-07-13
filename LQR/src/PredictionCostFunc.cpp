@@ -13,7 +13,7 @@
 
 void iLQR::PredictionCostFunc(const Containers::StateVector &xHat, const Containers::InputVector &uHat,
 							  const Containers::InputCostMatrix &Rt, const Containers::StateCostMatrix &Qt,
-							  double PredictionCost)
+							  double &PredictionCost)
 {
 
     Util Utility;
@@ -31,8 +31,16 @@ void iLQR::PredictionCostFunc(const Containers::StateVector &xHat, const Contain
 	uHatT = uHat.transpose();
 	xHatT = xHat.transpose();
 
+/*	std::cout << "||||==================================================||||" << std::endl;
+	std::cout << "this is the uhat transpose: " << std::endl << uHatT << std::endl;
+	std::cout << "this is the xhat transpose: " << std::endl << uHatT << std::endl;
+	std::cout << "this is the uhat : " << std::endl << uHat << std::endl;
+	std::cout << "this is the xhat : " << std::endl << xHat << std::endl;
+	std::cout << "this is the Rt : " << std::endl << Rt << std::endl;
+	std::cout << "this is the Qt : " << std::endl << Qt << std::endl;
+*/
 	StateCost = xHatT*Qt*xHat;
 	InputCost = uHatT*Rt*uHat;
-	PredictionCost = StateCost + InputCost;
 
+	PredictionCost = StateCost + InputCost;
 }
