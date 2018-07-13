@@ -14,6 +14,7 @@
 #include </home/sebastijan/eclipse-workspace/LQR/src/UpdateQ.cpp>
 #include </home/sebastijan/eclipse-workspace/LQR/src/UpdateR.cpp>
 #include </home/sebastijan/eclipse-workspace/LQR/src/SolveDARE.cpp>
+#include </home/sebastijan/eclipse-workspace/LQR/src/SolveCARE.cpp>
 #include </home/sebastijan/eclipse-workspace/LQR/src/ComputeK.cpp>
 #include </home/sebastijan/eclipse-workspace/LQR/src/Prediction.cpp>
 #include </home/sebastijan/eclipse-workspace/LQR/src/PredictionCostFunc.cpp>
@@ -41,6 +42,10 @@
 
 int main()
 {
+
+	/** Do you want to save the data for plotting [0 - no, 1 -yes] */
+	int SaveFiles = 1;
+
 	/** initialise the classes we need */
 	iLQR LQR;
 	Util Utility;
@@ -61,11 +66,10 @@ int main()
 	/** Size of our trajectories; i.e. number of waypoints */
 	int TrajectorySize = Data.TRAJECTORY_SIZE;
 
-	double PredictionCost, TempWayp;
-
 	/** Define both */
-	double CurrentCost = 9e500;
-
+	double PredictionCost = 9e100;
+	double CurrentCost = 9e100;
+	double TempWayp;
 
 	/** Container with waypoint information filled up in GetKeys */
 	Containers::WaypSeq WaypContainer;
@@ -158,8 +162,6 @@ int main()
 		   -0.9,   1,  0,
 		   0,   -0.9,  0;
 
-
-
 	// We read the .txt file with trajectories and pack them into 2 maps. one has trajectory IDs, the other has inputs
 	FileParse.ReadFile(TrajFile, CompleteWaypoints, CompleteInputs);
 
@@ -173,6 +175,8 @@ int main()
 	// ######################### Compute feedback matrices ################################# //
 	// ##################################################################################### //
 
+	/** Are you using the discrete or continuous K computation */
+	int Discrete = 0;
 
 	/** For trajectory in trajectories; for waypoints in waypoints */
 	for(TrajIt = TrajContainer.begin(); TrajIt != TrajContainer.end(); TrajIt++) {
@@ -180,17 +184,14 @@ int main()
 		/** Recheck whether we want to iterate until the last element */
 		for(WaypIt = WaypContainer.begin(); WaypIt != WaypContainer.end(); WaypIt++) {
 
-			/** We iteratively solve P and K */
-			// Rt and Qt correspond to the current Waypoint
+			/** We iteratively solve P and K, Rt corresponds to the time (i.e. waypoint) parametrization */
 			Rt = LQR.UpdateR(R, *WaypIt);
 			Qt = LQR.UpdateQ(Q, *WaypIt);
-			P = LQR.SolveDARE(A, B, Qt, Rt);
-			LQR.ComputeK (Rt, B, P, K);
+			P = LQR.SolveCARE(A, B, Qt, Rt); //P_dare = LQR.SolveDARE(A, B, Qt, Rt);
+			LQR.ComputeK (Rt, B, P, K, A, Discrete);
 
-			/** Before we add information to the feedback matrix we need to convert it into the correct format to have a good identifier */
-			/** We add identifier information that is used to add it into the map */
+			/** K matrix for each ID: trajectory + waypoint (i.e. 'A15') is saved to a map */
 			Identifier = *TrajIt + std::to_string(*WaypIt);
-			/** Save K for this trajectory and waypoint */
 			FeedbackMatrixMap.insert({Identifier, K});
 		}
 	std::cout << "Computed K matrices for trajectory: " << *TrajIt << std::endl;
@@ -203,8 +204,9 @@ int main()
 	// ######################### Receive user input ######################################## //
 	// ##################################################################################### //
 
+	int i = 0;
 	bool repeat = true;
-	while (repeat) // this should be while the euclidean distance of the system is far from the goal state
+	while (i < 12) // this should be while the euclidean distance of the system is far from the goal state
 		{
 		// when no key is hit, we are here, so this is where some of the code needs to be
 	    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -217,7 +219,7 @@ int main()
 		if (std::stoi(NearWayp) >= 1)
 
 	    {
-	    	x = x + xDot;
+	    	x = xDot;
 	    	std::cout << "System state: " << std::endl << x << std::endl << std::endl;
 	    }
 
@@ -250,34 +252,39 @@ int main()
 			LQR.Prediction(A, B, uUser, x, CompleteWaypoints[PredIdentifier], CompleteInputs[PredIdentifier], SystemHat);
 			Rt = LQR.UpdateR(R, TempWayp);
 			Qt = LQR.UpdateQ(Q, TempWayp);
+
 			LQR.PredictionCostFunc(SystemHat.StateHat, SystemHat.InputHat, Rt, Qt, PredictionCost);
 
 			std::cout << "The cost for trajectory point: " << PredIdentifier << " is: " << PredictionCost << std::endl;
-			std::cout << "It calculated the trajectory state: " << std::endl << CompleteWaypoints[PredIdentifier] << std::endl;
-			std::cout << "It calculated the trajectory input: " << std::endl << CompleteInputs[PredIdentifier] << std::endl;
+			std::cout << "It extracted the trajectory state: " << std::endl << CompleteWaypoints[PredIdentifier] << std::endl;
+			std::cout << "It extracted the trajectory input: " << std::endl << CompleteInputs[PredIdentifier] << std::endl;
 			std::cout << "This was the prediction for the state: " << std::endl << SystemHat.StateHat << std::endl;
 			std::cout << "This was the prediction for the input: " << std::endl << SystemHat.InputHat << std::endl;
 
+			std::cout << "This is the current cost: " << CurrentCost << std::endl << std::endl;
+			std::cout << "This is the prediction cost: " << PredictionCost << std::endl << std::endl;
 
 			if (CurrentCost > PredictionCost)
 				{CurrentCost = PredictionCost;
 				OptTraj = *TrajIt;} // optimal trajectory
 			}
-		CurrentCost = 9e500;
+
+	    std::cout << "The optimal trajectory: " << OptWaypoint << " has a cost of: " << CurrentCost << std::endl << std::endl;
+
+		CurrentCost = 9e100;
 		OptWaypoint = OptTraj + NearWayp;
 
 	    UserHistory.push_back(OptTraj);
 	    UserHistoryStorage.push_back(OptWaypoint);
 
-	    std::cout << "The optimal trajectory: " << OptWaypoint << " has a cost of: " << PredictionCost << std::endl << std::endl;
 	    /** Select correct trajectory + correct waypoint */
 
 	    std::cout << "Before rereferencing, user input: " << std::endl << uUser << std::endl << std::endl;
-	    std::cout << "Before rereferencing, K matrix: " << std::endl << FeedbackMatrixMap[OptWaypoint] << std::endl << std::endl;
+	    std::cout << "K matrix: " << std::endl << FeedbackMatrixMap[OptWaypoint] << std::endl << std::endl;
 
 	    LQR.OptimalControl(x, uUser, FeedbackMatrixMap[OptWaypoint], uStar);
 
-	    std::cout << "Before rereferencing, but after computing, optimal control: " << std::endl << uStar << std::endl << std::endl;
+	    std::cout << "Before rereferencing, optimal control: " << std::endl << uStar << std::endl << std::endl;
 
 	    LQR.ReferenceChange (uBar, xBar, CompleteInputs[OptWaypoint], CompleteWaypoints[OptWaypoint], uStar, x);
 
@@ -287,14 +294,9 @@ int main()
 
 
 
-		/*InputHistory.push_back(uUser);
+		InputHistory.push_back(uUser);
 		OptimalInputHistory.push_back(uStar);
-		StateHistory.push_back(x);*/
-
-
-	    /* we compute current - optimal
-	     * for both system and ipnut
-	     */
+		StateHistory.push_back(x);
 
 	    xDot = A*xBar + B*uBar;
 
@@ -304,13 +306,16 @@ int main()
 
 	    /* Add optimal control to the dataset that will be written */
 
+
+	    i += 1;
 	    }
 
 	/*	Here, we need code that will add additional things */
 
-/*	std::ofstream ofile;
+	if (SaveFiles == 1) {
+
+	std::ofstream ofile;
 	ofile.open("UserHistory.txt", std::ios::app);
-//	ofile << "trajpoint" << std::endl;
 	for (Containers::WaypSeqHist::const_iterator el = UserHistoryStorage.begin(); el != UserHistoryStorage.end(); el++)
 		{
 		ofile << *el << std::endl;
@@ -319,7 +324,6 @@ int main()
 
 	std::ofstream ffile;
 	ffile.open("InputHistory.txt", std::ios::app);
-//	ffile << "x " << "y " << std::endl;
 	for (Containers::InputHistory::iterator el1 = InputHistory.begin(); el1 != InputHistory.end(); el1++)
 		{
 		ffile << (*el1)[0] << " " << (*el1)[1] << std::endl;
@@ -328,7 +332,6 @@ int main()
 
 	std::ofstream sfile;
 	sfile.open("OptimalInputHistory.txt", std::ios::app);
-//	sfile << "x " << "y " << std::endl;
 	for (Containers::InputHistory::iterator el2 = OptimalInputHistory.begin(); el2 != OptimalInputHistory.end(); el2++)
 		{
 		sfile << (*el2)[0] << " " << (*el2)[1] << std::endl;
@@ -337,19 +340,21 @@ int main()
 
 	std::ofstream dfile;
 	dfile.open("StateHistory.txt", std::ios::app);
-//	dfile << "x " << " y " << " theta " << std::endl;
 	for (Containers::SystemHistory::iterator el3 = StateHistory.begin(); el3 != StateHistory.end(); el3++)
 		{
 		dfile << (*el3)[0] << " " << (*el3)[1] << " " << (*el3)[2] << std::endl;
 		}
 		dfile.close();
-*/
+	}
 
 return 0;
 }
 
 
+//	clock_t begin = clock();
 
-
+//	clock_t end = clock();
+//	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+//	std::cout << elapsed_secs << std::endl;
 
 
